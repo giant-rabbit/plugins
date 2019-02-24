@@ -16,6 +16,7 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -25,15 +26,19 @@ import com.google.android.gms.maps.GoogleMapOptions;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polygon;
+import com.google.android.gms.maps.model.PolygonOptions;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.PluginRegistry;
 import io.flutter.plugin.platform.PlatformView;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -45,10 +50,12 @@ final class GoogleMapController
         GoogleMap.OnCameraMoveStartedListener,
         GoogleMap.OnInfoWindowClickListener,
         GoogleMap.OnMarkerClickListener,
+        GoogleMap.OnPolygonClickListener,
         GoogleMapOptionsSink,
         MethodChannel.MethodCallHandler,
         OnMapReadyCallback,
         OnMarkerTappedListener,
+        OnPolygonTappedListener,
         PlatformView {
   private static final String TAG = "GoogleMapController";
   private final int id;
@@ -57,6 +64,7 @@ final class GoogleMapController
   private final PluginRegistry.Registrar registrar;
   private final MapView mapView;
   private final Map<String, MarkerController> markers;
+  private final Map<String, PolygonController> polygons;
   private GoogleMap googleMap;
   private boolean trackCameraPosition = false;
   private boolean myLocationEnabled = false;
@@ -78,6 +86,7 @@ final class GoogleMapController
     this.registrar = registrar;
     this.mapView = new MapView(context, options);
     this.markers = new HashMap<>();
+    this.polygons = new HashMap<>();
     this.density = context.getResources().getDisplayMetrics().density;
     methodChannel =
         new MethodChannel(registrar.messenger(), "plugins.flutter.io/google_maps_" + id);
@@ -144,6 +153,10 @@ final class GoogleMapController
     return new MarkerBuilder(this);
   }
 
+  private PolygonBuilder newPolygonBuilder() {
+    return new PolygonBuilder(this);
+  }
+
   Marker addMarker(MarkerOptions markerOptions, boolean consumesTapEvents) {
     final Marker marker = googleMap.addMarker(markerOptions);
     markers.put(marker.getId(), new MarkerController(marker, consumesTapEvents, this));
@@ -177,6 +190,7 @@ final class GoogleMapController
     googleMap.setOnCameraMoveListener(this);
     googleMap.setOnCameraIdleListener(this);
     googleMap.setOnMarkerClickListener(this);
+    googleMap.setOnPolygonClickListener(this);
     updateMyLocationEnabled();
   }
 
@@ -233,6 +247,14 @@ final class GoogleMapController
           final MarkerController marker = marker(markerId);
           Convert.interpretMarkerOptions(call.argument("options"), marker);
           result.success(null);
+          break;
+        }
+      case "polygon#add":
+        {
+          final PolygonBuilder polygonBuilder = newPolygonBuilder();
+          Convert.interpretPolygonOptions(call.argument("options"), polygonBuilder);
+          final String polygonId = polygonBuilder.build();
+          result.success(polygonId);
           break;
         }
       default:
@@ -442,5 +464,26 @@ final class GoogleMapController
     }
     return context.checkPermission(
         permission, android.os.Process.myPid(), android.os.Process.myUid());
+  }
+
+  Polygon addPolygon(PolygonOptions polygonOptions) {
+    final Polygon polygon = googleMap.addPolygon(polygonOptions);
+    polygons.put(polygon.getId(), new PolygonController(polygon, this));
+    return polygon;
+  }
+
+  @Override
+  public void onPolygonClick(Polygon polygon) {
+    final PolygonController polygonController = polygons.get(polygon.getId());
+    if (polygonController != null) {
+      polygonController.onTap();
+    }
+  }
+
+  @Override
+  public void onPolygonTapped(Polygon polygon) {
+    final Map<String, Object> arguments = new HashMap<>(2);
+    arguments.put("polygon", polygon.getId());
+    methodChannel.invokeMethod("polygon#onTap", arguments);
   }
 }

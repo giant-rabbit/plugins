@@ -53,6 +53,16 @@ class GoogleMapController extends ChangeNotifier {
   Set<Marker> get markers => Set<Marker>.from(_markers.values);
   final Map<String, Marker> _markers = <String, Marker>{};
 
+  /// Callbacks to receive tap events for polygons placed on this map.
+  final ArgumentCallbacks<Polygon> onPolygonTapped =
+      ArgumentCallbacks<Polygon>();
+
+  /// The current set of polygons on this map.
+  ///
+  /// The returned set will be a detached snapshot of the polygons collection.
+  Set<Polygon> get polygons => Set<Polygon>.from(_polygons.values);
+  final Map<String, Polygon> _polygons = <String, Polygon>{};
+
   /// True if the map camera is currently moving.
   bool get isCameraMoving => _isCameraMoving;
   bool _isCameraMoving = false;
@@ -79,6 +89,13 @@ class GoogleMapController extends ChangeNotifier {
         final Marker marker = _markers[markerId];
         if (marker != null) {
           onMarkerTapped(marker);
+        }
+        break;
+      case 'polygon#onTap':
+        final String polygonId = call.arguments['polygon'];
+        final Polygon polygon = _polygons[polygonId];
+        if (polygon != null) {
+          onPolygonTapped(polygon);
         }
         break;
       case 'camera#onMoveStarted':
@@ -234,5 +251,25 @@ class GoogleMapController extends ChangeNotifier {
       'marker': id,
     });
     _markers.remove(id);
+  }
+
+  /// Adds a polygon to the map, configured using the specified custom
+  /// [options].
+  ///
+  /// Change listeners are notified once the polygon has been added on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes with the added polygon once listeners have
+  /// been notified.
+  Future<Polygon> addPolygon(PolygonOptions options) async {
+    final PolygonOptions effectiveOptions =
+        PolygonOptions.defaultOptions.copyWith(options);
+    final Map<String, dynamic> json = Map<String, dynamic>();
+    json['options'] = options._toJson();
+    final String polygonId = await _channel.invokeMethod('polygon#add', json);
+    final Polygon polygon = Polygon(polygonId, effectiveOptions);
+    _polygons[polygonId] = polygon;
+    notifyListeners();
+    return polygon;
   }
 }

@@ -15,6 +15,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import io.flutter.view.FlutterMain;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -263,6 +264,32 @@ class Convert {
     final Object zIndex = data.get("zIndex");
     if (zIndex != null) {
       sink.setZIndex(toFloat(zIndex));
+    }
+  }
+
+  static void interpretPolygonOptions(Object o, PolygonOptionsSink sink) {
+    final Map<?, ?> data = toMap(o);
+    final Object clickable = data.get("clickable");
+    if (clickable != null) {
+      sink.setClickable(toBoolean(clickable));
+    }
+    final Object fillColor = data.get("fillColor");
+    if (fillColor != null) {
+      sink.setFillColor(toInt(fillColor));
+    }
+    final Object pointsObject = data.get("points");
+    if (pointsObject != null) {
+      final List<?> pointsList = toList(pointsObject);
+      final List<LatLng> points = new LinkedList<LatLng>();
+      for (Object pointObject: pointsList) {
+        final List<?> pointList = toList(pointObject);
+        points.add(toLatLng(pointList));
+      }
+      sink.setPoints(points);
+    }
+    final Object strokeColor = data.get("strokeColor");
+    if (strokeColor != null) {
+      sink.setStrokeColor(toInt(strokeColor));
     }
   }
 }
