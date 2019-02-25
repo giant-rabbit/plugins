@@ -336,6 +336,6 @@ class GoogleMapController extends ChangeNotifier {
     await _channel.invokeMethod('polygon#remove', <String, dynamic>{
       'polygon': id,
     });
-    _polygon.remove(id);
+    _polygons.remove(id);
   }
 }
