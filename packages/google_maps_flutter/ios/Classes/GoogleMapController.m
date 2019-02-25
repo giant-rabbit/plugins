@@ -9,11 +9,15 @@
 static id positionToJson(GMSCameraPosition* position);
 static double toDouble(id json);
 static CLLocationCoordinate2D toLocation(id json);
+static GMSPath* toPath(id json);
+static UIColor* toUIColor(id json);
 static GMSCameraPosition* toOptionalCameraPosition(id json);
 static GMSCoordinateBounds* toOptionalBounds(id json);
 static GMSCameraUpdate* toCameraUpdate(id json);
 static void interpretMapOptions(id json, id<FLTGoogleMapOptionsSink> sink);
 static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> sink,
+                                   NSObject<FlutterPluginRegistrar>* registrar);
+static void interpretPolygonOptions(id json, id<FLTGoogleMapPolygonOptionsSink> sink,
                                    NSObject<FlutterPluginRegistrar>* registrar);
 
 @implementation FLTGoogleMapFactory {
@@ -46,6 +50,7 @@ static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> si
   GMSMapView* _mapView;
   int64_t _viewId;
   NSMutableDictionary* _markers;
+  NSMutableDictionary* _polygons;
   FlutterMethodChannel* _channel;
   BOOL _trackCameraPosition;
   NSObject<FlutterPluginRegistrar>* _registrar;
@@ -66,6 +71,7 @@ static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> si
     GMSCameraPosition* camera = toOptionalCameraPosition(args[@"initialCameraPosition"]);
     _mapView = [GMSMapView mapWithFrame:frame camera:camera];
     _markers = [NSMutableDictionary dictionaryWithCapacity:1];
+    _polygons = [NSMutableDictionary dictionaryWithCapacity:1];
     _trackCameraPosition = NO;
     interpretMapOptions(args[@"options"], self);
     NSString* channelName =
@@ -119,6 +125,18 @@ static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> si
   } else if ([call.method isEqualToString:@"marker#remove"]) {
     [self removeMarkerWithId:call.arguments[@"marker"]];
     result(nil);
+  } else if ([call.method isEqualToString:@"polygon#add"]) {
+    NSDictionary* options = call.arguments[@"options"];
+    NSString* polygonId = [self addPolygonWithPath:toPath(options[@"points"])];
+    interpretPolygonOptions(options, [self polygonWithId:polygonId], _registrar);
+    result(polygonId);
+  } else if ([call.method isEqualToString:@"polygon#update"]) {
+    interpretPolygonOptions(call.arguments[@"options"],
+                           [self polygonWithId:call.arguments[@"polygon"]], _registrar);
+    result(nil);
+  } else if ([call.method isEqualToString:@"polygon#remove"]) {
+    [self removePolygonWithId:call.arguments[@"polygon"]];
+    result(nil);
   } else {
     result(FlutterMethodNotImplemented);
   }
@@ -166,6 +184,26 @@ static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> si
   if (markerController) {
     [markerController setVisible:NO];
     [_markers removeObjectForKey:markerId];
+  }
+}
+
+- (NSString*)addPolygonWithPath:(GMSPath*)path {
+  FLTGoogleMapPolygonController* polygonController =
+      [[FLTGoogleMapPolygonController alloc] initWithPath:path mapView:_mapView];
+  [polygonController setVisible:YES];
+  _polygons[polygonController.polygonId] = polygonController;
+  return polygonController.polygonId;
+}
+
+- (FLTGoogleMapPolygonController*)polygonWithId:(NSString*)polygonId {
+  return _polygons[polygonId];
+}
+
+- (void)removePolygonWithId:(NSString*)polygonId {
+  FLTGoogleMapPolygonController* polygonController = _polygons[polygonId];
+  if (polygonController) {
+    [polygonController setVisible:NO];
+    [_polygons removeObjectForKey:polygonId];
   }
 }
 
@@ -296,6 +334,25 @@ static float toFloat(id json) {
 static CLLocationCoordinate2D toLocation(id json) {
   NSArray* data = json;
   return CLLocationCoordinate2DMake(toDouble(data[0]), toDouble(data[1]));
+}
+
+static GMSPath* toPath(id json) {
+  NSArray* data = json;
+  GMSMutablePath* path = [GMSMutablePath path];
+  for (NSArray* coordinate in data) {
+    double latitude = [[coordinate firstObject] doubleValue];
+    double longitude = [[coordinate lastObject] doubleValue];
+    [path addCoordinate:CLLocationCoordinate2DMake(latitude, longitude)];
+  }
+  return path;
+}
+
+static UIColor* toUIColor(id json) {
+  int rgbValue = toInt(json);
+  return [[UIColor alloc] initWithRed: ((float)((rgbValue & 0xFF0000) >> 16)/255.0)
+                                green: ((float)((rgbValue & 0xFF00) >> 8)/255.0)
+                                 blue: ((float)(rgbValue & 0xFF)/255.0)
+                                alpha: ((float)((rgbValue & 0xFF000000) >> 24)/255.0)];
 }
 
 static CGPoint toPoint(id json) {
@@ -472,5 +529,22 @@ static void interpretMarkerOptions(id json, id<FLTGoogleMapMarkerOptionsSink> si
   id zIndex = data[@"zIndex"];
   if (zIndex) {
     [sink setZIndex:toInt(zIndex)];
+  }
+}
+
+static void interpretPolygonOptions(id json, id<FLTGoogleMapPolygonOptionsSink> sink,
+                                   NSObject<FlutterPluginRegistrar>* registrar) {
+  NSDictionary* data = json;
+  id clickable = data[@"clickable"];
+  if (clickable) {
+    [sink setClickable:toBool(clickable)];
+  }
+  id fillColor = data[@"fillColor"];
+  if (fillColor) {
+    [sink setFillColor:toUIColor(fillColor)];
+  }
+  id strokeColor = data[@"strokeColor"];
+  if (strokeColor) {
+    [sink setStrokeColor:toUIColor(strokeColor)];
   }
 }
