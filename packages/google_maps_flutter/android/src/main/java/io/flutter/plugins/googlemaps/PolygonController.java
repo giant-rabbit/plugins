@@ -25,6 +25,10 @@ class PolygonController implements PolygonOptionsSink {
     }
   }
 
+  void remove() {
+    polygon.remove();
+  }
+
   @Override
   public void setClickable(boolean clickable) {
     polygon.setClickable(clickable);

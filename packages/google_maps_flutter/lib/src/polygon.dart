@@ -81,7 +81,9 @@ class PolygonOptions {
 
     addIfPresent('clickable', clickable);
     addIfPresent('fillColor', fillColor.hashCode);
-    json['points'] = points.map((point) => point._toJson()).toList();
+    if (points != null) {
+      json['points'] = points.map((point) => point._toJson()).toList();
+    }
     addIfPresent('strokeColor', strokeColor.hashCode);
 
     return json;

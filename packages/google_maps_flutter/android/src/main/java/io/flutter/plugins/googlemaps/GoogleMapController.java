@@ -257,6 +257,21 @@ final class GoogleMapController
           result.success(polygonId);
           break;
         }
+      case "polygon#remove":
+        {
+          final String polygonId = call.argument("polygon");
+          removePolygon(polygonId);
+          result.success(null);
+          break;
+        }
+      case "polygon#update":
+        {
+          final String polygonId = call.argument("polygon");
+          final PolygonController polygon = polygon(polygonId);
+          Convert.interpretPolygonOptions(call.argument("options"), polygon);
+          result.success(null);
+          break;
+        }
       default:
         result.notImplemented();
     }
@@ -469,6 +484,21 @@ final class GoogleMapController
   Polygon addPolygon(PolygonOptions polygonOptions) {
     final Polygon polygon = googleMap.addPolygon(polygonOptions);
     polygons.put(polygon.getId(), new PolygonController(polygon, this));
+    return polygon;
+  }
+
+  private void removePolygon(String polygonId) {
+    final PolygonController polygonController = polygons.remove(polygonId);
+    if (polygonController != null) {
+      polygonController.remove();
+    }
+  }
+
+  private PolygonController polygon(String polygonId) {
+    final PolygonController polygon = polygons.get(polygonId);
+    if (polygon == null) {
+      throw new IllegalArgumentException("Unknown polygon: " + polygonId);
+    }
     return polygon;
   }
 

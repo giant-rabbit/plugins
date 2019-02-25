@@ -272,4 +272,70 @@ class GoogleMapController extends ChangeNotifier {
     notifyListeners();
     return polygon;
   }
+
+  /// Updates the specified [polygon] with the given [changes]. The polygon must
+  /// be a current member of the [polygons] set.
+  ///
+  /// Change listeners are notified once the polygon has been updated on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes once listeners have been notified.
+  Future<void> updatePolygon(Polygon polygon, PolygonOptions changes) async {
+    assert(polygon != null);
+    assert(_polygons[polygon._id] == polygon);
+    assert(changes != null);
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
+    await _channel.invokeMethod('polygon#update', <String, dynamic>{
+      'polygon': polygon._id,
+      'options': changes._toJson(),
+    });
+    polygon._options = polygon._options.copyWith(changes);
+    notifyListeners();
+  }
+
+  /// Removes the specified [polygon] from the map. The polygon must be a current
+  /// member of the [polygons] set.
+  ///
+  /// Change listeners are notified once the polygon has been removed on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes once listeners have been notified.
+  Future<void> removePolygon(Polygon polygon) async {
+    assert(polygon != null);
+    assert(_polygons[polygon._id] == polygon);
+    await _removePolygon(polygon._id);
+    notifyListeners();
+  }
+
+  /// Removes all [polygons] from the map.
+  ///
+  /// Change listeners are notified once all polygons have been removed on the
+  /// platform side.
+  ///
+  /// The returned [Future] completes once listeners have been notified.
+  Future<void> clearPolygons() async {
+    assert(_polygons != null);
+    final List<String> polygonIds = List<String>.from(_polygons.keys);
+    for (String id in polygonIds) {
+      await _removePolygon(id);
+    }
+    notifyListeners();
+  }
+
+  /// Helper method to remove a single polygon from the map. Consumed by
+  /// [removePolygon] and [clearPolygon].
+  ///
+  /// The returned [Future] completes once the polygon has been removed from
+  /// [_polygon].
+  Future<void> _removePolygon(String id) async {
+    // TODO(amirh): remove this on when the invokeMethod update makes it to stable Flutter.
+    // https://github.com/flutter/flutter/issues/26431
+    // ignore: strong_mode_implicit_dynamic_method
+    await _channel.invokeMethod('polygon#remove', <String, dynamic>{
+      'polygon': id,
+    });
+    _polygon.remove(id);
+  }
 }
