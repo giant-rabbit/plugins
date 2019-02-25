@@ -291,6 +291,10 @@ static void interpretPolygonOptions(id json, id<FLTGoogleMapPolygonOptionsSink> 
   [_channel invokeMethod:@"infoWindow#onTap" arguments:@{@"marker" : markerId}];
 }
 
+- (void)mapView:(GMSMapView*)mapView didTapOverlay:(GMSOverlay*)overlay {
+  NSString* polygonId = overlay.userData[0];
+  [_channel invokeMethod:@"polygon#onTap" arguments:@{@"polygon" : polygonId}];
+}
 @end
 
 #pragma mark - Implementations of JSON conversion functions.
