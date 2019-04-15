@@ -14,4 +14,5 @@ interface PolygonOptionsSink {
   void setFillColor(int color);
   void setPoints(List<LatLng> points);
   void setStrokeColor(int color);
+  void setStrokeWidth(float width);
 }

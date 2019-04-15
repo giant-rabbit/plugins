@@ -43,4 +43,9 @@ class PolygonBuilder implements PolygonOptionsSink {
   public void setStrokeColor(int color) {
     polygonOptions.strokeColor(color);
   }
+
+  @Override
+  public void setStrokeWidth(float width) {
+    polygonOptions.strokeWidth(width);
+  }
 }

@@ -46,17 +46,20 @@ class PolygonOptions {
     this.fillColor,
     this.points,
     this.strokeColor,
+    this.strokeWidth,
   });
 
   final bool clickable;
   final Color fillColor;
   final List<LatLng> points;
   final Color strokeColor;
+  final double strokeWidth;
 
   static const PolygonOptions defaultOptions = PolygonOptions(
     fillColor: Color(0xFF000000),
     clickable: false,
     strokeColor: Color(0xFF000000),
+    strokeWidth: 1.0,
   );
 
   PolygonOptions copyWith(PolygonOptions changes) {
@@ -67,6 +70,8 @@ class PolygonOptions {
       clickable: changes.clickable ?? clickable,
       fillColor: changes.fillColor ?? fillColor,
       points: changes.points ?? points,
+      strokeColor: changes.strokeColor ?? strokeColor,
+      strokeWidth: changes.strokeWidth ?? strokeWidth,
     );
   }
 
@@ -85,6 +90,7 @@ class PolygonOptions {
       json['points'] = points.map((point) => point._toJson()).toList();
     }
     addIfPresent('strokeColor', strokeColor.hashCode);
+    addIfPresent('strokeWidth', strokeWidth);
 
     return json;
   }

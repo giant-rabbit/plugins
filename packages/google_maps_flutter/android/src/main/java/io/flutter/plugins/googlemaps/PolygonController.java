@@ -48,4 +48,9 @@ class PolygonController implements PolygonOptionsSink {
   public void setStrokeColor(int color) {
     polygon.setStrokeColor(color);
   }
+
+  @Override
+  public void setStrokeWidth(float width) {
+    polygon.setStrokeWidth(width);
+  }
 }

@@ -291,5 +291,9 @@ class Convert {
     if (strokeColor != null) {
       sink.setStrokeColor(toInt(strokeColor));
     }
+    final Object strokeWidth = data.get("strokeWidth");
+    if (strokeWidth != null) {
+      sink.setStrokeWidth(toFloat(strokeWidth));
+    }
   }
 }
