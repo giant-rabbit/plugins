@@ -32,6 +32,9 @@ static uint64_t _nextPolygonId = 0;
 - (void)setStrokeColor:(UIColor*)strokeColor {
   _polygon.strokeColor = strokeColor;
 }
+- (void)setStrokeWidth:(CGFloat)strokeWidth {
+  _polygon.strokeWidth = strokeWidth;
+}
 - (void)setPath:(GMSPath*)path {
   _polygon.path = path;
 }

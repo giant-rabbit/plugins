@@ -551,4 +551,8 @@ static void interpretPolygonOptions(id json, id<FLTGoogleMapPolygonOptionsSink> 
   if (strokeColor) {
     [sink setStrokeColor:toUIColor(strokeColor)];
   }
+  id strokeWidth = data[@"strokeWidth"];
+  if (strokeWidth) {
+    [sink setStrokeWidth:toDouble(strokeWidth)];
+  }
 }

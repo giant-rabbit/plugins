@@ -10,6 +10,7 @@
 - (void)setClickable:(BOOL)clickable;
 - (void)setFillColor:(UIColor*)fillColor;
 - (void)setStrokeColor:(UIColor*)strokeColor;
+- (void)setStrokeWidth:(CGFloat)strokeWidth;
 - (void)setPath:(GMSPath*)path;
 - (void)setVisible:(BOOL)visible;
 @end
