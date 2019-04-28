@@ -11,6 +11,7 @@ import 'move_camera.dart';
 import 'page.dart';
 import 'place_circle.dart';
 import 'place_marker.dart';
+import 'place_polygon.dart';
 import 'place_polyline.dart';
 import 'scrolling_map.dart';
 
@@ -23,7 +24,7 @@ final List<Page> _allPages = <Page>[
   MarkerIconsPage(),
   ScrollingMapPage(),
   PlacePolylinePage(),
-  PlaceCirclePage(),
+  PlacePolygonPage(),
 ];
 
 class MapsDemo extends StatelessWidget {

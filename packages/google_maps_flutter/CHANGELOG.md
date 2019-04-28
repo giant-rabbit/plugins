@@ -17,6 +17,7 @@
 ## 0.5.10
 
 * Support Color's alpha channel when converting to UIColor on iOS.
+* Add support for Polygons.
 
 ## 0.5.9
 
