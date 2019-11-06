@@ -7,9 +7,12 @@ package io.flutter.plugins.webviewflutter;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.hardware.display.DisplayManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Handler;
 import android.view.View;
+import android.webkit.WebSettings;
 import android.webkit.WebStorage;
 import android.webkit.WebViewClient;
 import io.flutter.plugin.common.BinaryMessenger;
@@ -49,6 +52,7 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     // Allow local storage.
     webView.getSettings().setDomStorageEnabled(true);
     webView.getSettings().setJavaScriptCanOpenWindowsAutomatically(true);
+    setCaching(context, webView);
 
     methodChannel = new MethodChannel(messenger, "plugins.flutter.io/webview_" + id);
     methodChannel.setMethodCallHandler(this);
@@ -359,5 +363,19 @@ public class FlutterWebView implements PlatformView, MethodCallHandler {
     methodChannel.setMethodCallHandler(null);
     webView.dispose();
     webView.destroy();
+  }
+
+  private boolean isNetworkAvailable(Context context) {
+    ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+    NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+    return activeNetworkInfo != null;
+  }
+
+  private void setCaching(Context context, InputAwareWebView webView) {
+    if (isNetworkAvailable(context)) {
+      webView.getSettings().setCacheMode(WebSettings.LOAD_DEFAULT);
+    } else {
+      webView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ONLY);
+    }
   }
 }
