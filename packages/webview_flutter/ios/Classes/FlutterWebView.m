@@ -5,6 +5,7 @@
 #import "FlutterWebView.h"
 #import "FLTWKNavigationDelegate.h"
 #import "JavaScriptChannelHandler.h"
+#import "Reachability.h"
 
 @implementation FLTWebViewFactory {
   NSObject<FlutterBinaryMessenger>* _messenger;
@@ -334,7 +335,12 @@
   if (!nsUrl) {
     return false;
   }
-  NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:nsUrl];
+  NSMutableURLRequest* request = [NSMutableURLRequest requestWithURL:nsUrl ];
+  Reachability* reachability = [Reachability reachabilityForInternetConnection];
+  NetworkStatus networkStatus = [reachability currentReachabilityStatus];
+  if (networkStatus == NotReachable) {
+    request.cachePolicy = 3;
+  }
   [request setAllHTTPHeaderFields:headers];
   [_webView loadRequest:request];
   return true;
